@@ -4,7 +4,6 @@
 
 
 @layer base {
-
   :root {
     --background: 0 0% 100%;
     --foreground: 224 71.4% 4.1%;
@@ -32,7 +31,7 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: "Karla", Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
 
@@ -79,5 +78,6 @@
 
   body {
     @apply bg-background text-foreground;
+    padding: 8px;
   }
 }
