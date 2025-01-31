@@ -13,8 +13,12 @@ export async function GetLevels(): Promise<Level[]> {
 }
 
 export async function UploadLevelImage(image: FormData) {
-  return fetch(API_URL + "/levels/image", {
+  const res = await fetch(API_URL + "/levels/image", {
     method: 'POST',
     body: image
   })
+
+  if (!res.ok) {
+    throw new Error(`Response status: ${res.status}`)
+  }
 }

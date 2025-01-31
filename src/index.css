@@ -80,4 +80,13 @@
     @apply bg-background text-foreground;
     padding: 8px;
   }
+
+  .color-picker .react-colorful__saturation {
+    display: none;
+  }
+
+  .color-picker .react-colorful__alpha {
+    height: 14px;
+    border-radius: 5px;
+  }
 }
