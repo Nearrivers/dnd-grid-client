@@ -1,60 +1,16 @@
-import { LegacyRef, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import LevelImageUploadForm from "@/components/levels/LevelImageUploadForm";
-import { Image, Layer, Line, Stage } from "react-konva";
+import { Image, Layer, Stage } from "react-konva";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import ColorPicker from "@/components/ui/color-picker";
 import { Button } from "@/components/ui/button";
 import { KonvaEventObject } from "konva/lib/Node";
 import Konva from "konva";
-
-interface GridProps {
-  cellWidth: number;
-  gridWidth: number;
-  gridHeight: number;
-  gridColor: string;
-  offset?: { x: number; y: number };
-  ref?: LegacyRef<Konva.Layer>
-}
-
-function LevelGrid(props: GridProps) {
-  const verticalLines = [];
-  const horizontalLines = [];
-
-  for (let i = 0; i < props.gridWidth / props.cellWidth; i++) {
-    verticalLines.push(
-      <Line
-        key={i}
-        strokeWidth={2}
-        stroke={props.gridColor}
-        points={[i * props.cellWidth, 0, i * props.cellWidth, props.gridHeight]}
-        offset={props.offset}
-      />,
-    );
-  }
-
-  for (let i = 0; i < props.gridHeight / props.cellWidth; i++) {
-    horizontalLines.push(
-      <Line
-        key={i}
-        strokeWidth={2}
-        stroke={props.gridColor}
-        points={[0, i * props.cellWidth, props.gridWidth, i * props.cellWidth]}
-        offset={props.offset}
-      />,
-    );
-  }
-
-  return (
-    <Layer ref={props.ref}>
-      {verticalLines}
-      {horizontalLines}
-    </Layer>
-  );
-}
+import LevelGrid from "@/components/levels/LevelGrid";
 
 function LevelsForm() {
-  const levelGrid = useRef<Konva.Layer>(null)
+  const levelGrid = useRef<Konva.Layer>(null);
   const [selected, setSelected] = useState("#ffffff40");
   const [bgImage, setBgImage] = useState<HTMLImageElement>();
   const [cellWidth, setCellWidth] = useState(20);
@@ -65,15 +21,18 @@ function LevelsForm() {
     const img = document.createElement("img");
     img.src = URL.createObjectURL(file);
     setBgImage(img);
+    URL.revokeObjectURL(img.src);
   }
 
-  const MAX_IMG_HEIGHT = 800;
-  const MAX_IMG_WIDTH = 900;
   if (bgImage) {
-    imgHeight =
-      MAX_IMG_HEIGHT < bgImage.height ? MAX_IMG_HEIGHT : bgImage.height;
-    imgWidth = MAX_IMG_WIDTH < bgImage.width ? MAX_IMG_WIDTH : bgImage.width;
+    imgHeight = bgImage.height;
+    imgWidth = bgImage.width;
   }
+
+  const centerOffset = {
+    x: -((window.innerWidth - imgWidth) / 2),
+    y: -((window.innerHeight - imgHeight) / 2),
+  };
 
   type konvaOffset = { x: number; y: number };
   let lastCenter: konvaOffset | null = null;
@@ -96,7 +55,6 @@ function LevelsForm() {
     const stage = e.currentTarget.getStage();
 
     if (!stage) {
-      console.log("c'est ciao");
       return;
     }
 
@@ -162,9 +120,16 @@ function LevelsForm() {
     };
 
     stage.position(newPos);
+    if (!levelGrid.current || !stage) {
+      return;
+    }
+
+    const imgLayer = e.currentTarget;
+    levelGrid.current.absolutePosition(imgLayer.absolutePosition());
 
     lastDist = dist;
     lastCenter = newCenter;
+    stage.batchDraw();
   }
 
   function onTouchEnd() {
@@ -173,13 +138,13 @@ function LevelsForm() {
   }
 
   function onDragMove(e: KonvaEventObject<DragEvent>) {
-    const imgLayer = e.currentTarget
-    const stage = e.currentTarget.getStage()
+    const imgLayer = e.currentTarget;
+    const stage = e.currentTarget.getStage();
     if (!levelGrid.current || !stage) {
-      return
+      return;
     }
-    levelGrid.current.absolutePosition(imgLayer.absolutePosition())
-    stage.batchDraw()
+    levelGrid.current.absolutePosition(imgLayer.absolutePosition());
+    stage.batchDraw();
   }
 
   return (
@@ -195,6 +160,7 @@ function LevelsForm() {
         width={window.innerWidth}
         height={window.innerHeight}
         className="absolute left-0 top-0 overflow-hidden"
+        on
       >
         <LevelGrid
           cellWidth={25}
@@ -209,10 +175,7 @@ function LevelsForm() {
             onTouchEnd={onTouchEnd}
             onDragMove={onDragMove}
             draggable
-            offset={{
-              x: -((window.innerWidth - imgWidth) / 2),
-              y: -((window.innerHeight - imgHeight) / 2),
-            }}
+            offset={centerOffset}
           >
             <Image image={bgImage} width={imgWidth} height={imgHeight} />
           </Layer>
@@ -223,10 +186,7 @@ function LevelsForm() {
           gridWidth={imgWidth}
           gridHeight={imgHeight}
           gridColor={selected}
-          offset={{
-            x: -((window.innerWidth - imgWidth) / 2),
-            y: -((window.innerHeight - imgHeight) / 2),
-          }}
+          offset={centerOffset}
         ></LevelGrid>
       </Stage>
       <LevelImageUploadForm onUploadSuccess={onUploadSuccess} />

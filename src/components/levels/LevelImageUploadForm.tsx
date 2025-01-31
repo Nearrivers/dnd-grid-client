@@ -21,7 +21,6 @@ interface LevelImageUploadFormProps {
 function LevelImageUploadForm(props: LevelImageUploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [open, setOpen] = useState(true);
-  const [err, setErr] = useState("");
   const { toast } = useToast();
 
   const mutation = useMutation({
@@ -31,14 +30,17 @@ function LevelImageUploadForm(props: LevelImageUploadFormProps) {
       if (!file) {
         return;
       }
+
+      toast({
+        description: "Image upload successful",
+      });
       props.onUploadSuccess(file);
     },
     onError: (error) => {
       toast({
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-      setErr(error.message);
     },
   });
 
@@ -98,7 +100,7 @@ function LevelImageUploadForm(props: LevelImageUploadFormProps) {
             </p>
           )}
           <p className="hidden text-sm text-red-500 group-invalid:block">
-            Un fichier est obligatoire {err}
+            Un fichier est obligatoire
           </p>
         </form>
       </DialogContent>
