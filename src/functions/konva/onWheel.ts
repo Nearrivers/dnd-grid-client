@@ -3,7 +3,7 @@ import { KonvaEventObject } from "konva/lib/Node";
 export function onWheel(e: KonvaEventObject<WheelEvent>) {
   const scaleBy = 1.5;
   e.evt.preventDefault();
-  const stage = e.target.getStage();
+  const stage = e.currentTarget.getStage()
 
   if (!stage) {
     return;

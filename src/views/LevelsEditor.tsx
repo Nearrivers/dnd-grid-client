@@ -1,194 +1,79 @@
-import { useRef, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import LevelImageUploadForm from "@/components/levels/LevelImageUploadForm";
-import { Image, Layer, Stage } from "react-konva";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import ColorPicker from "@/components/ui/color-picker";
-import { Button } from "@/components/ui/button";
-import { KonvaEventObject } from "konva/lib/Node";
-import Konva from "konva";
-import LevelGrid from "@/components/levels/LevelGrid";
+import EditorHeader from "@/components/levels/editor/EditorHeader";
+import Editor from "@/components/levels/editor/Editor";
+import { useMutation } from "@tanstack/react-query";
+import { Level } from "@/types/Level";
+import { CreateLevel } from "@/services/levels";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router";
+import { LevelsRoutes } from "@/routes/levels";
 
 function LevelsForm() {
-  const levelGrid = useRef<Konva.Layer>(null);
   const [selected, setSelected] = useState("#ffffff40");
-  const [bgImage, setBgImage] = useState<HTMLImageElement>();
+  const [bgImage, setBgImage] = useState<HTMLImageElement | undefined>(
+    undefined,
+  );
   const [cellWidth, setCellWidth] = useState(20);
-  let imgWidth = 0,
-    imgHeight = 0;
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const fileName = useRef("");
+
+  const mutation = useMutation({
+    mutationFn: (newLevel: Level) => CreateLevel(newLevel),
+    onSuccess: () => {
+      toast({
+        description: "Niveau créé avec succès",
+      });
+      navigate(LevelsRoutes.HOME);
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        description: error.message,
+      });
+    },
+  });
 
   function onUploadSuccess(file: File) {
-    const img = document.createElement("img");
+    const img = new window.Image();
+    fileName.current = file.name;
     img.src = URL.createObjectURL(file);
-    setBgImage(img);
-    URL.revokeObjectURL(img.src);
+    img.addEventListener("load", () => {
+      setBgImage(img);
+    });
+  }
+
+  function onSaveLevel(evt: FormEvent) {
+    evt.preventDefault();
+    const form = evt.target as HTMLFormElement;
+
+    const levelName = new FormData(form).get("levelName");
+    if (!levelName) {
+      return;
+    }
+
+    mutation.mutate({
+      id: 0,
+      grid_color: selected,
+      grid_spacing: 2,
+      grid_width: cellWidth,
+      image_path: fileName.current,
+      name: levelName.toString(),
+    });
   }
 
   if (bgImage) {
-    imgHeight = bgImage.height;
-    imgWidth = bgImage.width;
-  }
-
-  const centerOffset = {
-    x: -((window.innerWidth - imgWidth) / 2),
-    y: -((window.innerHeight - imgHeight) / 2),
-  };
-
-  type konvaOffset = { x: number; y: number };
-  let lastCenter: konvaOffset | null = null;
-  let lastDist = 0;
-  let dragStopped = false;
-
-  function getCenter(p1: konvaOffset, p2: konvaOffset) {
-    return {
-      x: (p1.x + p2.x) / 2,
-      y: (p1.y + p2.y) / 2,
-    };
-  }
-
-  function getDistance(p1: konvaOffset, p2: konvaOffset) {
-    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  }
-
-  function onToucheMove(e: KonvaEventObject<TouchEvent>) {
-    e.evt.preventDefault();
-    const stage = e.currentTarget.getStage();
-
-    if (!stage) {
-      return;
-    }
-
-    var touch1 = e.evt.touches[0];
-    var touch2 = e.evt.touches[1];
-
-    // we need to restore dragging, if it was cancelled by multi-touch
-    if (touch1 && !touch2 && !stage.isDragging() && dragStopped) {
-      stage.startDrag();
-      dragStopped = false;
-    }
-
-    if (!touch1 || !touch2) {
-      return;
-    }
-
-    // if the stage was under Konva's drag&drop
-    // we need to stop it, and implement our own pan logic with two pointers
-    if (stage.isDragging()) {
-      dragStopped = true;
-      stage.stopDrag();
-    }
-
-    var p1 = {
-      x: touch1.clientX,
-      y: touch1.clientY,
-    };
-    var p2 = {
-      x: touch2.clientX,
-      y: touch2.clientY,
-    };
-
-    if (!lastCenter) {
-      lastCenter = getCenter(p1, p2);
-      return;
-    }
-    var newCenter = getCenter(p1, p2);
-
-    var dist = getDistance(p1, p2);
-
-    if (!lastDist) {
-      lastDist = dist;
-    }
-
-    // local coordinates of center point
-    var pointTo = {
-      x: (newCenter.x - stage.x()) / stage.scaleX(),
-      y: (newCenter.y - stage.y()) / stage.scaleX(),
-    };
-
-    var scale = stage.scaleX() * (dist / lastDist);
-
-    stage.scaleX(scale);
-    stage.scaleY(scale);
-
-    // calculate new position of the stage
-    var dx = newCenter.x - lastCenter.x;
-    var dy = newCenter.y - lastCenter.y;
-
-    var newPos = {
-      x: newCenter.x - pointTo.x * scale + dx,
-      y: newCenter.y - pointTo.y * scale + dy,
-    };
-
-    stage.position(newPos);
-    if (!levelGrid.current || !stage) {
-      return;
-    }
-
-    const imgLayer = e.currentTarget;
-    levelGrid.current.absolutePosition(imgLayer.absolutePosition());
-
-    lastDist = dist;
-    lastCenter = newCenter;
-    stage.batchDraw();
-  }
-
-  function onTouchEnd() {
-    lastDist = 0;
-    lastCenter = null;
-  }
-
-  function onDragMove(e: KonvaEventObject<DragEvent>) {
-    const imgLayer = e.currentTarget;
-    const stage = e.currentTarget.getStage();
-    if (!levelGrid.current || !stage) {
-      return;
-    }
-    levelGrid.current.absolutePosition(imgLayer.absolutePosition());
-    stage.batchDraw();
+    URL.revokeObjectURL(bgImage.src);
   }
 
   return (
     <>
-      <header className="color-picker absolute left-0 top-0 z-50 flex w-full justify-between border-b bg-background p-4 pt-6">
-        <h1 className="text-3xl font-extrabold">Grille de jeu</h1>
-        <div className="flex gap-2">
-          <Button variant={"ghost"}>Annuler</Button>
-          <Button>OK</Button>
-        </div>
-      </header>
-      <Stage
-        width={window.innerWidth}
-        height={window.innerHeight}
-        className="absolute left-0 top-0 overflow-hidden"
-        on
-      >
-        <LevelGrid
-          cellWidth={25}
-          gridWidth={window.visualViewport?.width || 0}
-          gridHeight={window.visualViewport?.height || 0}
-          gridColor={"#ffffff12"}
-        />
-
-        {bgImage && (
-          <Layer
-            onTouchMove={onToucheMove}
-            onTouchEnd={onTouchEnd}
-            onDragMove={onDragMove}
-            draggable
-            offset={centerOffset}
-          >
-            <Image image={bgImage} width={imgWidth} height={imgHeight} />
-          </Layer>
-        )}
-        <LevelGrid
-          ref={levelGrid}
-          cellWidth={cellWidth}
-          gridWidth={imgWidth}
-          gridHeight={imgHeight}
-          gridColor={selected}
-          offset={centerOffset}
-        ></LevelGrid>
-      </Stage>
+      <EditorHeader onSaveLevel={onSaveLevel} />
+      <Editor selected={selected} bgImage={bgImage} cellWidth={cellWidth} />
       <LevelImageUploadForm onUploadSuccess={onUploadSuccess} />
       <footer className="absolute bottom-0 left-0 z-50 w-full justify-between p-6">
         <div className="flex justify-between rounded-xl border bg-background p-4">

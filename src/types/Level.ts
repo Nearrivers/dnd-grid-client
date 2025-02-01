@@ -7,3 +7,5 @@ export type Level = {
   grid_color: string
   grid_spacing: number
 }
+
+export type NewLevel = Omit<Level, "id">

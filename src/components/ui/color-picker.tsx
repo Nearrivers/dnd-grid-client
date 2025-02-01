@@ -1,14 +1,15 @@
 import React, { useCallback, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { Pipette, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { RgbaColorPicker } from "react-colorful";
 import { debounce } from "lodash";
 import { Button } from "./button";
 import { Input } from "./input";
 
 const DEFAULT_CHILDREN = (
-  <div className="flex aspect-square h-[2rem] items-center justify-center rounded-full bg-primary">
-    <Pipette className="aspect-square w-[1rem] text-white" />
+  <div className="flex h-[2rem] items-center justify-center rounded-lg border px-4 text-sm font-bold transition-colors duration-200 hover:bg-secondary">
+    Couleur et opacité de la grille
+    {/* <Pipette className="aspect-square w-[1rem] text-white" /> */}
   </div>
 );
 
@@ -46,7 +47,6 @@ const ColorPicker: React.FC<TColorPicker> = ({
 
   const handleChangeColor = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newColor: any = e.target.value;
-    console.log("test");
     onChange(newColor);
   };
 

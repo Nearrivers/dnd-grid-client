@@ -32,7 +32,7 @@ function LevelImageUploadForm(props: LevelImageUploadFormProps) {
       }
 
       toast({
-        description: "Image upload successful",
+        description: "Envoi de l'image réussi",
       });
       props.onUploadSuccess(file);
     },
