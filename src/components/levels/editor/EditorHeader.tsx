@@ -32,12 +32,7 @@ function EditorHeader({ onSaveLevel }: EditorHeaderProps) {
     <header className="color-picker absolute left-0 top-0 z-50 flex w-full justify-between border-b bg-background p-4 pt-6">
       <div className="flex items-center gap-6">
         <h1 className="text-3xl font-extrabold">Grille de jeu</h1>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>Aide</TooltipTrigger>
-            <TooltipContent>Une case représente 1.5m</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+
       </div>
       <div className="flex gap-2">
         <Button

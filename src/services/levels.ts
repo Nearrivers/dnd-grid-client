@@ -37,3 +37,13 @@ export async function CreateLevel(newLevel: NewLevel) {
     throw new Error(`Response status: ${res.status}`)
   }
 }
+
+export async function DeleteLevel(id: number) {
+  const res = await fetch(`${API_URL}/levels/${id}`, {
+    method: "DELETE"
+  })
+
+  if (!res.ok) {
+    throw new Error(`Response status: ${res.status}`)
+  }
+}

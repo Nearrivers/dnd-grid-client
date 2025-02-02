@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { LevelsRoutes } from "@/routes/levels";
-import { GetLevels } from "@/services/levels";
-import { useQuery } from "@tanstack/react-query";
+import { DeleteLevel, GetLevels } from "@/services/levels";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import {
   Card,
@@ -10,8 +10,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 import { API_URL } from "@/constants/API_URL";
-import { ButtonGroup } from "@/components/ui/button-group";
+import { useToast } from "@/hooks/use-toast";
 
 function LevelsLoader() {
   return (
@@ -23,12 +35,76 @@ function LevelsLoader() {
   );
 }
 
+interface DeleteLevelDialogProps {
+  levelName: string;
+  levelId: number;
+  onLevelDeleted: () => void;
+}
+
+function DeleteLevelDialog({
+  levelName,
+  levelId,
+  onLevelDeleted,
+}: DeleteLevelDialogProps) {
+  const { toast } = useToast();
+
+  const mutation = useMutation({
+    mutationFn: () => DeleteLevel(levelId),
+    onSuccess: () => {
+      toast({
+        description: `Niveau "${levelName}" supprimé`,
+      });
+      onLevelDeleted();
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        description: error.message,
+      });
+    },
+  });
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger>
+        <Button variant={"outline"}>Supprimer</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Supprimer "{levelName}" ?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Une fois le niveau supprimé, il ne sera pas possible de le
+            récupérer. Vous perdrez les paramètres de la grille ainsi que les
+            entités que vous avez ajouté.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction asChild>
+            <Button
+              variant={"destructive"}
+              className="hover: bg-destructive"
+              onClick={() => mutation.mutate()}
+            >
+              Supprimer
+            </Button>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 function LevelsList() {
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: ["getAllLevels"],
     queryFn: GetLevels,
     retry: 0,
   });
+
+  function onLevelDeleted() {
+    refetch()
+  }
 
   if (isPending) {
     return <LevelsLoader />;
@@ -52,12 +128,10 @@ function LevelsList() {
                 className="h-80 object-contain"
               />
             </CardContent>
-            <CardFooter className="flex justify-center">
-              <ButtonGroup orientation="horizontal">
-                <Button variant={"outline"}>Jouer</Button>
-                <Button variant={"outline"}>Editer</Button>
-                <Button variant={"outline"}>Supprimer</Button>
-              </ButtonGroup>
+            <CardFooter className="flex justify-center gap-2">
+              <Button variant={"outline"}>Jouer</Button>
+              <Button variant={"outline"}>Editer</Button>
+              <DeleteLevelDialog levelName={level.name} levelId={level.id} onLevelDeleted={onLevelDeleted} />
             </CardFooter>
           </Card>
         </li>

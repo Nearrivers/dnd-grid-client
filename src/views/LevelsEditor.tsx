@@ -76,11 +76,12 @@ function LevelsForm() {
       <Editor selected={selected} bgImage={bgImage} cellWidth={cellWidth} />
       <LevelImageUploadForm onUploadSuccess={onUploadSuccess} />
       <footer className="absolute bottom-0 left-0 z-50 w-full justify-between p-6">
-        <div className="flex justify-between rounded-xl border bg-background p-4">
+        <div className="flex items-center justify-between rounded-xl border bg-background p-4">
           <div className="grid w-1/3 gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="grid-size">Taille de la grille</Label>
-              <p className="w-12 rounded-full bg-secondary px-2 py-1 text-right text-xs opacity-65">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="grid-size">Taille de la grille</Label>{" "}
+              <p className="text-xs opacity-65">Une case représente 1.5m</p>
+              <p className="w-12 rounded-full ml-auto bg-secondary px-2 py-1 text-right text-xs opacity-65">
                 {cellWidth}px
               </p>
             </div>
